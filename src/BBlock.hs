@@ -3,7 +3,7 @@ module BBlock(Block(..), BlockType(..), crush) where
 import Data.Maybe
 import BBase
 
-data Block = Block { pos :: (Pos Double), size :: (Double, Double), blType:: BlockType }
+data Block = Block { pos :: (Pos Double), size :: (Double, Double), blType:: BlockType } deriving Eq
 
 data BlockType = WeekBlock
     | FixedBlock
@@ -31,3 +31,11 @@ crushType WeekBlock = Nothing
 crushType FixedBlock = Just FixedBlock
 crushType (LifeBlock 0) = Nothing
 crushType (LifeBlock n) = Just (LifeBlock (n-1))
+
+instance Reflector Block where
+  rect (Block (Pos (x, y)) (width, height) _) = (Pos (x, y), (width, height))
+  cols (Block _ _ WeekBlock) = Nothing
+  cols b@(Block _ _ FixedBlock) = Just b
+  cols b@(Block _ _ (LifeBlock n))
+    | n == 0    = Nothing
+    | otherwise = Just b{ blType = LifeBlock (n - 1) }
