@@ -7,6 +7,8 @@ import Control.Monad
 import System.Random
 
 import BModel
+import BStages
+import BDraw
 
 myWindowSize = Size (ceiling windowWidth) (ceiling windowHeight)
 
@@ -24,83 +26,51 @@ main :: IO ()
 main = do
   getArgsAndInitialize
   charRef <- newIORef iniChars
+  stageRef <- newIORef Staging
 
   initialWindowSize $= myWindowSize
   createWindow ""
   scale (1::GLfloat) 1 1
   clearColor $= black
-  displayCallback $= showField charRef
-  addTimerCallback 1 (stepBall charRef)
-  keyboardCallback $= Just (keyboard charRef)
+  displayCallback $= showField stageRef charRef
+  keyboardCallback $= Just (keyboard stageRef charRef)
   idleCallback $= Just idle
   mainLoop
 
 idle :: IdleCallback
 idle = postRedisplay Nothing
 
-stepBall charRef = do
-  (Charactors _ board _) <- readIORef charRef
+stepBall stageRef charRef = do
   rndT <- randomRIO (0, pi)
   modifyIORef charRef (moveChars rndT)
-  addTimerCallback 0 (stepBall charRef)
-  showField charRef
+  showField stageRef charRef
+  char <- readIORef charRef
+  stage <- readIORef stageRef
+  if cleared char then do
+    modifyIORef charRef $ nextStage stage
+    modifyIORef stageRef stepMode
+  else if died char then do
+    modifyIORef stageRef (\_ -> Ending)
+  else do
+    addTimerCallback 1 (stepBall stageRef charRef)
 
-keyboard :: IORef Charactors -> KeyboardCallback
-keyboard charRef c _ = do
-  case c of
-    'a' -> modifyIORef charRef $ moveBoard boardLeft
-    'd' -> modifyIORef charRef $ moveBoard boardRight
-    _   -> return ()
-
-moveBoard fBoard chars@(Charactors _ _board _) = chars { board = fBoard _board }
-
-showField charRef = do
-  (Charactors ball board blocks) <- readIORef charRef
-  clear [ColorBuffer]
-  drawBall ball
-  drawBoard board
-  drawBlocks blocks
-  flush
-  swapBuffers
-
-drawBall (Ball (x, y) _) = do
-  currentColor $= colorBall
-  renderPrimitive Polygon $ do
-    convVert $ Pos (x-2,y)
-    convVert $ Pos (x,y-2)
-    convVert $ Pos (x+2,y)
-    convVert $ Pos (x,y+2)
-
-drawBoard (Board x width) = do
-  currentColor $= colorBoard
-  drawRectangle (x, 293) (width, 3)
-
-drawBlocks blocks = foldM drawBlockChain () blocks
+cleared (Charactors _ _ _ n) = n == 0
+died char = y > windowHeight
   where
-    drawBlockChain _ = drawBlock
+    (Ball (_, y) _) = ball char
 
-drawBlock (Block (Pos (x,y)) (width, height) bType) = do
-  currentColor $= colorOfType bType
-  drawRectangle (x, y) (width, height)
+nextStage (Stage n) (Charactors ball board _ _) = genChars ball board (stageBlocks !! n)
 
-drawRectangle (x, y) (width, height) = renderPrimitive Polygon $ do
-  convVert $ Pos (x-width,y-height)
-  convVert $ Pos (x-width,y+height)
-  convVert $ Pos (x+width,y+height)
-  convVert $ Pos (x+width,y-height)
+keyboard :: IORef ApplicationMode -> IORef Charactors -> KeyboardCallback
+keyboard stageRef charRef c _ = do
+  stage <- readIORef stageRef
+  if stage == Staging then do
+    modifyIORef stageRef (\_ -> Stage 0)
+    addTimerCallback 1 (stepBall stageRef charRef)
+  else
+    case c of
+      'a' -> modifyIORef charRef $ moveBoard boardLeft
+      'd' -> modifyIORef charRef $ moveBoard boardRight
+      _   -> return ()
 
-colorOfType WeekBlock = colorWeek
-colorOfType FixedBlock = colorFixed
-colorOfType (LifeBlock n) = colorOfLife n
-colorOfLife 0 = colorL0
-colorOfLife 1 = colorL1
-colorOfLife 2 = colorL2
-colorOfLife _ = colorLL
-
--- 論理座標を表示座標に変換します。
-conv :: Pos Double -> Vertex2 GLfloat
-conv (Pos (x, y)) = Vertex2 dispX dispY
-  where
-    dispX = realToFrac $ (x * 2 - windowWidth) / windowWidth
-    dispY = realToFrac $ (windowHeight - y * 2) / windowHeight
-convVert = vertex.conv
+moveBoard fBoard chars = chars { board = fBoard $ board chars }
