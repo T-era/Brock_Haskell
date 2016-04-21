@@ -32,9 +32,10 @@ main = do
   createWindow ""
   scale (1::GLfloat) 1 1
   clearColor $= black
-  displayCallback $= showField stageRef charRef
+  --displayCallback $= showField stageRef charRef
   keyboardCallback $= Just (keyboard stageRef charRef)
   idleCallback $= Just idle
+  showField stageRef charRef
   mainLoop
 
 idle :: IdleCallback
@@ -46,13 +47,15 @@ stepBall stageRef charRef = do
   showField stageRef charRef
   char <- readIORef charRef
   stage <- readIORef stageRef
+  putStrLn $ show $ remains char
   if cleared char then do
+    putStrLn "CCC"
     modifyIORef charRef $ nextStage stage
     modifyIORef stageRef stepMode
   else if died char then do
     modifyIORef stageRef (\_ -> Ending)
   else do
-    addTimerCallback 1 (stepBall stageRef charRef)
+    addTimerCallback 20 (stepBall stageRef charRef)
 
 cleared (Charactors _ _ _ n) = n == 0
 died char = y > windowHeight
@@ -64,13 +67,14 @@ nextStage (Stage n) (Charactors ball board _ _) = genChars ball board (stageBloc
 keyboard :: IORef ApplicationMode -> IORef Charactors -> KeyboardCallback
 keyboard stageRef charRef c _ = do
   stage <- readIORef stageRef
-  if stage == Staging then do
-    modifyIORef stageRef (\_ -> Stage 0)
-    addTimerCallback 1 (stepBall stageRef charRef)
-  else
+  if onPlay stage then
     case c of
       'a' -> modifyIORef charRef $ moveBoard boardLeft
       'd' -> modifyIORef charRef $ moveBoard boardRight
       _   -> return ()
+  else do
+    modifyIORef stageRef (\_ -> Stage 0)
+    addTimerCallback 1 (stepBall stageRef charRef)
+  showField stageRef charRef
 
 moveBoard fBoard chars = chars { board = fBoard $ board chars }

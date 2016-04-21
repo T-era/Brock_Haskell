@@ -12,7 +12,7 @@ stepMode (Stage n)
 
 stageBlocks :: [[Block]]
 stageBlocks = [
-  [Block (200,1) (8,5) (LifeBlock 2)],
+  [Block (200,10) (8,5) (LifeBlock 2)],
   [Block (x,y) (8, 5) (LifeBlock (if odd (floor (x / 20+y / 20)) then 1 else 2))
     | x <- [20, 40 .. windowWidth - 20]
     , y <- [20, 40 .. 100]]
