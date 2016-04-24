@@ -7,17 +7,16 @@ data ApplicationMode = Staging | Stage Int | Ending | Completed deriving (Show, 
 
 stepMode Staging = Stage 0
 stepMode (Stage n)
-  | n + 1 < length stageBlocks = Stage (n+1)
-  | otherwise               = Completed
+  | n < length stageBlocks = Stage (n+1)
+  | otherwise              = Completed
 stepMode s = s
 
 stageBlocks :: [[Block]]
 stageBlocks = [
-  [Block (110,30) (80,50) (LifeBlock 2)]{-,
-  [Block (x,y) (8, 5) (LifeBlock (if odd (floor (x / 20+y / 20)) then 1 else 2))
-    | x <- [20, 40 .. windowWidth - 20]
-    , y <- [20, 40 .. 100]]
-    -}
+  [Block (110,80) (80,50) (LifeBlock 2)],
+  [Block (x,y) (16, 10) (LifeBlock (if odd (floor (x / 40+y / 40)) then 1 else 2))
+    | x <- [40, 80 .. windowWidth - 20]
+    , y <- [40, 80 .. 100]]
   ]
 onPlay :: ApplicationMode -> Bool
 onPlay (Stage _) = True

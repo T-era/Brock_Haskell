@@ -8,12 +8,12 @@ import BBlock
 
 data Charactors = Charactors { ball :: Ball, board :: Board, blocks :: [Block], remains :: Int } deriving Show
 
-iniBall = Ball (100,0) (2,2)
+iniBall = Ball (10,290) (2,2)
 iniBoard = Board (windowWidth / 2) 20
-iniBlocks = [Block (100,10) (8, 5) WeekBlock]
-iniChars = genChars iniBall iniBoard iniBlocks
+iniBlocks = [Block (100,10) (8, 5) (LifeBlock 1)]
+iniChars = genChars iniBlocks
 
-genChars ball board blocks = Charactors ball board blocks remainBlocks
+genChars blocks = Charactors iniBall iniBoard blocks remainBlocks
   where
     remainBlocks = length blocksAbleCrush
     blocksAbleCrush = filter ableCrush blocks
@@ -41,9 +41,9 @@ reflectAll rndT chars = _reflectAll rndT [] chars
 _reflectAll :: Double -> [Block] -> Charactors -> Charactors
 _reflectAll rndT done chars
   | blocks chars == [] = chars{ blocks = done }
-  | otherwise          = _reflectAll rndT done' $ Charactors ball' board bs rem'
+  | otherwise          = _reflectAll rndT done' chars{ ball = ball', blocks = bs, remains = rem' }
   where
-    (Charactors ball board (block:bs) rem) = chars
+    (Charactors ball _ (block:bs) rem) = chars
     (done', rem')
       | block' == Nothing = (done, rem - 1)
       | otherwise         = (M.fromJust block':done, rem)

@@ -53,7 +53,7 @@ died char = y > windowHeight
   where
     (Ball (_, y) _) = ball char
 
-charAtStage (Stage n) (Charactors ball board _ _) = genChars ball board (stageBlocks !! n)
+charAtStage (Stage n) _ = genChars (stageBlocks !! n)
 charAtStage _ c = c
 
 keyboard :: IORef ApplicationMode -> IORef Charactors -> KeyboardCallback
@@ -65,7 +65,9 @@ keyboard stageRef charRef c _ = do
       'd' -> modifyIORef charRef $ moveBoard boardRight
       _   -> return ()
   else do
-    modifyIORef stageRef (\_ -> Stage 0)
+    let stage' = Stage 0
+    modifyIORef stageRef (\_ -> stage')
+    modifyIORef charRef $ charAtStage stage'
     addTimerCallback 1 (stepBall stageRef charRef)
   showField stageRef charRef
 

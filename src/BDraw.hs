@@ -41,7 +41,7 @@ renderStringCenter y str = preservingMatrix $ do
   scale (0.001::GLfloat) 0.001 0.001
   w <- stringWidth Roman str
   h <- fontHeight Roman
-  translate (Vector3 (-0.5*(fromIntegral w)) (y*h*1.5) 0 ::Vector3 GLfloat)
+  translate (Vector3 (-0.5*(fromIntegral w)) (y*h*2) 0 ::Vector3 GLfloat)
   renderString Roman str
 
 renderStringsCenter lst = let

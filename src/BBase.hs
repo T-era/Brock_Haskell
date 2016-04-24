@@ -31,8 +31,8 @@ reflect rndT (reflector, ball) = _reflect (rect reflector)
       | nohit     = (Just reflector, ball)
       | edgeHitLtRb = (cols reflector, ball { dir = diffuse rndT (dy, dx)})  -- 方角入れ替え
       | edgeHitLbRt = (cols reflector, ball { dir = diffuse rndT (-dy, -dx)})  -- 方角入れ替え
-      | sideHit   = (cols reflector, ball { dir = (-dx,dy) })
-      | otherwise = (cols reflector, ball { dir = (dx,-dy) })
+      | sideHit   = (cols reflector, ball { dir = (-dx,dy * 0.9) })
+      | otherwise = (cols reflector, ball { dir = (dx * 0.9,-dy) })
       where
         nohit = outside y (ry - height) (ry + height)
             || outside x (rx - width) (rx + width)
@@ -52,7 +52,7 @@ reflect rndT (reflector, ball) = _reflect (rect reflector)
         edgeHit edges = any isOn edges
         isOn (x', y', dJudge) = (((x - x') * dy / dx) `neq` (y - y')
             && dJudge dx dy)
-neq a b = abs (a - b) < 0.3
+neq a b = abs (a - b) < 10.3
 
 diffuse :: Double -> Vect -> Vect
 diffuse rndT (dx, dy)
