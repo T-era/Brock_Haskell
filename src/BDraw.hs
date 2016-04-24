@@ -10,13 +10,12 @@ import BStages
 
 myWindowSize = Size (ceiling windowWidth) (ceiling windowHeight)
 
-black = Color4 0 0 0 1
 colorWeek = Color4 0.5 0.3 0.2 1
 colorFixed = Color4 1 0.8 0.5 1
-colorLL = Color4 0.5 0.3 0.3 1
-colorL2 = Color4 0.4 0.2 0.2 1
-colorL1 = Color4 0.3 0.1 0.1 1
-colorL0 = Color4 0.2 0 0 1
+colorLL = Color4 1.0 0.4 0.4 1
+colorL2 = Color4 0.8 0.3 0.3 1
+colorL1 = Color4 0.6 0.2 0.2 1
+colorL0 = Color4 0.4 0.1 0.1 1
 colorBall = Color4 0.5 0.5 1 1
 colorBoard = Color4 0 0 1 1
 
@@ -28,18 +27,28 @@ showField stageRef charRef = do
   else if stage == Ending then do
     drawPlayingField charRef
     currentColor $= colorBall
-    renderStringCenter "Failure..."
+    renderStringCenter 0 "Failure..."
+  else if stage == Completed then do
+    currentColor $= colorBall
+    renderStringsCenter ["Complete!", "... so what!?"]
   else do
     currentColor $= colorBall
-    renderStringCenter "Push any key!"
+    renderStringCenter 0 "Push any key!"
   flush
   swapBuffers
 
-renderStringCenter str = preservingMatrix $ do
+renderStringCenter y str = preservingMatrix $ do
   scale (0.001::GLfloat) 0.001 0.001
   w <- stringWidth Roman str
-  translate (Vector3 (-0.5*(fromIntegral w)) 0 0 ::Vector3 GLfloat)
+  h <- fontHeight Roman
+  translate (Vector3 (-0.5*(fromIntegral w)) (y*h*1.5) 0 ::Vector3 GLfloat)
   renderString Roman str
+
+renderStringsCenter lst = let
+  dy = (fromIntegral $ length lst - 1) * (-0.5)
+  in do
+    mapM_ (\ (y, str) -> renderStringCenter (fromIntegral y * dy)  str)
+      [(i, lst !! i) | i <- [0..length lst - 1]]
 
 drawPlayingField charRef = do
   (Charactors ball board blocks _) <- readIORef charRef
